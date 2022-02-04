@@ -29,6 +29,13 @@ class HeroGeomerty:
         self.bones = []  # type: List[HeroBone]
         self.poses = {}
         self.locations = {}
+        self.rivets = {}
+        self.face_sizes = {}
+        self.seam_half_edge = []
+        self.seam_original_indices = []
+        self.seam_boundaries = []
+        self.seams = []
+        self.boundaries = []
 
 
 class HeroBone:
@@ -100,6 +107,10 @@ class CKBFile:
         self._init_weights()
         self._init_parent()
         self._init_poses()
+        self._init_pos_groups()
+        self._init_uv_seams()
+        self._init_rivers()
+        self._init_face_sizes()
 
     def _init_settings(self):
         default_attributes = ["mesh", "normals", "uv1", "uv2", "blendTargets", "blendNormals", "weights", "animations",
@@ -344,3 +355,59 @@ class CKBFile:
                     self.geometry.poses[bone_type] = c
             self.geometry.bones = bones
             self.geometry.locations = locators
+
+    def _init_pos_groups(self):
+        reader = self.reader
+        if not self.version < 1.2 and self.options['posGroups']:
+            e = reader.get_int8()
+            t = reader.get_int16_array(e)
+            r = reader.get_float_array(3 * e)
+            # TODO: implement "_posGroups"
+
+    def _init_uv_seams(self):
+        reader = self.reader
+        if not self.version < 1.25 and self.options['uvSeams']:
+            e = reader.get_uint32_array(1)[0]
+            t = e * 3
+            self.geometry.seam_half_edge = reader.get_uint32_array(t)
+            self.geometry.seam_original_indices = reader.get_uint32_array(e)
+            self.geometry.seam_boundaries = reader.get_uint8_array(e)
+            r = reader.get_uint32_array(1)[0]
+            self.geometry.seams = reader.get_uint32_array(r)
+            n = reader.get_uint32_array(1)[0]
+            for i in range(n):
+                a = reader.get_uint32_array(1)[0]
+                o = reader.get_uint32_array(1)[0]
+                s = reader.get_float_array(3)
+                l = {
+                    'riEdge': a,
+                    'edgeCount': o,
+                    'position': s
+                }
+                self.geometry.boundaries.append(l)
+
+    def _init_rivers(self):
+        reader = self.reader
+        if self.options['rivets']:
+            e = reader.get_uint32_array(1)[0]
+            for t in range(e):
+                r = reader.get_string()
+                if r.startswith('rivet_'):
+                    r = r[6:]
+
+                rivet = {
+                    'name': r,
+                    'position': reader.get_float_array(3),
+                    'quaternion': reader.get_float_array(4),
+                    'scale': reader.get_float_array(3),
+                    'triangle': reader.get_uint32_array(1)[0],
+                    'barycentric': reader.get_float_array(3),
+                }
+                self.geometry.rivets[r]: rivet
+
+    def _init_face_sizes(self):
+        reader = self.reader
+        if self.options['faceSizes']:
+            e = reader.get_uint32_array(1)[0]
+            self.geometry.face_sizes = reader.get_int8_array(e)
+            print(1)

@@ -52,7 +52,7 @@ class CKBReader:
 
     def get_bit(self):
         self.i1_pointer += 1
-        return self.i1_buffer[self.i1_pointer - 1]
+        return bool(self.i1_buffer[self.i1_pointer - 1])
 
     def get_float(self):
         self.i32_pointer += 1
@@ -67,7 +67,7 @@ class CKBReader:
 
     def get_uint32_array(self, size):
         self.i32_pointer += size
-        return self.i32_buffer.astype(np.uint32)[self.i32_pointer - size:self.i32_pointer]
+        return [int(a) for a in self.i32_buffer.view(np.float32)[self.i32_pointer - size:self.i32_pointer]]
 
     def get_int16(self):
         self.i16_pointer += 1
@@ -95,7 +95,7 @@ class CKBReader:
     def get_uint8_array(self, size):
         return self.get_int8_array(size).view(np.uint8)
 
-    def get_string(self):
+    def get_string(self) -> str:
         return self.get_int8_array(self.get_int8()).tobytes().decode("utf-8")
 
     def get_quaternion_array(self, e):

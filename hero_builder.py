@@ -29,7 +29,7 @@ class HeroBuilder:
         config_page = get(config_url)
         config_text = config_page.text
         for line in config_text.split('\n'):
-            line = line.strip('\t \n').rstrip('\t \n')
+            line = line.strip('\t\n ').rstrip('\t\n ')
             if line.startswith('var LOAD_CONFIG'):
                 line = line.replace('var LOAD_CONFIG = \'', '')[:-2]
                 self.model_config = json.loads(line)
